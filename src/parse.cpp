@@ -332,7 +332,10 @@ ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectC
 
     if(Token->Length > 1)
     {
-        Result = LayoutIndependentKeycode(Temp, Hotkey);
+        if(StringHasPrefix(Temp, "button", 6))
+            Result = ButtonFromString(Temp, Hotkey);
+        else
+            Result = LayoutIndependentKeycode(Temp, Hotkey);
     }
     else
     {

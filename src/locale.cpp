@@ -78,6 +78,16 @@ bool KeycodeFromChar(char Key, hotkey *Hotkey)
     return Result;
 }
 
+bool ButtonFromString(const char *Key, hotkey *Hotkey)
+{
+     CGMouseButton Button = strtol(Key + 6, NULL, 0);
+     if(Button < 3)
+         return false;
+
+     Hotkey->Button = Button;
+     return true;
+}
+
 bool LayoutIndependentKeycode(char *Key, hotkey *Hotkey)
 {
     bool Result = true;
@@ -151,4 +161,9 @@ bool LayoutIndependentKeycode(char *Key, hotkey *Hotkey)
 bool StringsAreEqual(const char *A, const char *B)
 {
     return strcmp(A, B) == 0;
+}
+
+bool StringHasPrefix(const char *A, const char *Prefix, size_t n)
+{
+    return strncmp(A, Prefix, n) == 0;
 }

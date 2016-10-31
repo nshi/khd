@@ -85,6 +85,7 @@ struct hotkey
     hotkey_type Type;
     uint32_t Flags;
     CGKeyCode Key;
+    CGMouseButton Button;
     char *Command;
     char **App;
 
@@ -111,7 +112,8 @@ ClearFlags(hotkey *Hotkey, uint32_t Flag)
 }
 
 bool ExecuteHotkey(hotkey *Hotkey);
-bool HotkeyForCGEvent(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal);
+bool HotkeyForCGKey(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal);
+bool HotkeyForCGButton(CGEventFlags Flags, CGMouseButton Button, hotkey **Hotkey);
 void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key);
 
 mode *CreateBindingMode(const char *Mode);

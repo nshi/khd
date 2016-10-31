@@ -297,7 +297,8 @@ HotkeysAreEqual(hotkey *A, hotkey *B)
                    CompareShiftKey(A, B) &&
                    CompareAltKey(A, B) &&
                    CompareControlKey(A, B) &&
-                   A->Key == B->Key;
+                   A->Key == B->Key &&
+                   A->Button == B->Button;
         }
     }
 
@@ -305,7 +306,15 @@ HotkeysAreEqual(hotkey *A, hotkey *B)
 }
 
 internal hotkey
-CreateHotkeyFromCGEvent(CGEventFlags Flags, CGKeyCode Key)
+CreateHotkeyFromCGButton(CGEventFlags Flags, CGMouseButton Button)
+{
+    hotkey Eventkey = {};
+    Eventkey.Button = Button;
+    return Eventkey;
+}
+
+internal hotkey
+CreateHotkeyFromCGKey(CGEventFlags Flags, CGKeyCode Key)
 {
     hotkey Eventkey = {};
     Eventkey.Key = Key;
@@ -414,7 +423,7 @@ ExecuteModifierOnlyHotkey(uint32_t Flag)
 {
     CGEventFlags EventFlags = CreateCGEventFlagsFromHotkey(&Modifiers);
     hotkey *Hotkey = NULL;
-    if(HotkeyForCGEvent(EventFlags, 0, &Hotkey, false))
+    if(HotkeyForCGKey(EventFlags, 0, &Hotkey, false))
     {
         ExecuteHotkey(Hotkey);
     }
@@ -503,19 +512,15 @@ void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key)
 }
 
 internal bool
-HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey **Result, const char *Mode)
+HotkeyExists(hotkey LookupKey, hotkey **Result, const char *Mode)
 {
-    hotkey TempHotkey = {};
-    TempHotkey.Flags = Flags;
-    TempHotkey.Key = Keycode;
-
     mode *BindingMode = GetBindingMode(Mode);
     if(BindingMode)
     {
         hotkey *Hotkey = BindingMode->Hotkey;
         while(Hotkey)
         {
-            if(HotkeysAreEqual(Hotkey, &TempHotkey))
+            if(HotkeysAreEqual(Hotkey, &LookupKey))
             {
                 *Result = Hotkey;
                 return true;
@@ -528,15 +533,23 @@ HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey **Result, const char *Mod
     return false;
 }
 
-bool HotkeyForCGEvent(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal)
+bool HotkeyForCGKey(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal)
 {
-    hotkey Eventkey = CreateHotkeyFromCGEvent(Flags, Key);
+    hotkey Eventkey = CreateHotkeyFromCGKey(Flags, Key);
     if(Literal)
     {
         AddFlags(&Eventkey, Hotkey_Flag_Literal);
     }
 
-    return HotkeyExists(Eventkey.Flags, Eventkey.Key, Hotkey, ActiveBindingMode->Name);
+    return HotkeyExists(Eventkey, Hotkey, ActiveBindingMode->Name);
+}
+
+bool HotkeyForCGButton(CGEventFlags Flags, CGMouseButton Button, hotkey **Hotkey)
+{
+    hotkey Eventkey = CreateHotkeyFromCGButton(Flags, Button);
+    AddFlags(&Eventkey, Hotkey_Flag_Literal);
+
+    return HotkeyExists(Eventkey, Hotkey, ActiveBindingMode->Name);
 }
 
 void SendKeySequence(const char *Sequence)

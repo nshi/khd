@@ -80,7 +80,7 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
             ModifierTriggerLast = false;
 
             hotkey *Hotkey = NULL;
-            if(HotkeyForCGEvent(Flags, Key, &Hotkey, true))
+            if(HotkeyForCGKey(Flags, Key, &Hotkey, true))
             {
                 if((ExecuteHotkey(Hotkey)) &&
                    (!HasFlags(Hotkey, Hotkey_Flag_Passthrough)))
@@ -95,6 +95,21 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
             CGKeyCode Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
             RefreshModifierState(Flags, Key);
         } break;
+        case kCGEventOtherMouseDown:
+        {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            CGMouseButton Button = CGEventGetIntegerValueField(Event, kCGMouseEventButtonNumber);
+
+            hotkey *Hotkey = NULL;
+            if (HotkeyForCGButton(Flags, Button, &Hotkey))
+            {
+                if((ExecuteHotkey(Hotkey)) &&
+                   (!HasFlags(Hotkey, Hotkey_Flag_Passthrough)))
+                {
+                    return NULL;
+                }
+            }
+        } break;
     }
 
     return Event;
@@ -104,7 +119,8 @@ internal inline void
 ConfigureRunLoop()
 {
     CGEventMask KhdEventMask = (1 << kCGEventKeyDown) |
-                               (1 << kCGEventFlagsChanged);
+                               (1 << kCGEventFlagsChanged) |
+                               (1 << kCGEventOtherMouseDown);
     KhdEventTap = CGEventTapCreate(kCGSessionEventTap,
                                    kCGHeadInsertEventTap,
                                    kCGEventTapOptionDefault,
